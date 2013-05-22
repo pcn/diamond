@@ -7,7 +7,7 @@
 [server]
 
 # Handlers for published metrics.
-handlers = <%= @diamond_handlers.join(", ") %>
+ handlers = <%= @diamond_handlers.join(", ") %>
 # User diamond will run as
 # Leave empty to use the current user
 user = <%= @user %>
@@ -62,6 +62,7 @@ port = <%= @graphite_handler["port"] %>
 
 # Socket timeout (seconds)
 timeout = <%= @graphite_handler["timeout"] %>
+<% end %>
 <% if @diamond_handlers.include?('diamond.handler.graphitepickle.GraphitePickleHandler') %>
 [[GraphitePickleHandler]]
 ### Options for GraphitePickleHandler
@@ -72,8 +73,7 @@ host = <%= @graphite_picklehandler["host"] %>
 # Port to send metrics to
 port = <%= @graphite_picklehandler["port"] %>
 
-# Socket timeout (seconds)
-timeout = <%= @graphite_picklehandler["timeout"] %>
+# Socket timeout (timeout = <%= @graphite_picklehandler["timeout"] %>
 
 # Batch size for pickled metrics
 batch = <%= @graphite_picklehandler["batch"] %>
