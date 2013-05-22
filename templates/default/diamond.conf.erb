@@ -62,7 +62,7 @@ port = <%= @graphite_handler["port"] %>
 
 # Socket timeout (seconds)
 timeout = <%= @graphite_handler["timeout"] %>
-<% if @diamond_handlers.include?('diamond.handler.graphitepickle.GraphitePickleHandler')
+<% if @diamond_handlers.include?('diamond.handler.graphitepickle.GraphitePickleHandler') %>
 [[GraphitePickleHandler]]
 ### Options for GraphitePickleHandler
 
