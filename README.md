@@ -21,7 +21,7 @@ Opscode Cookbooks:
 Default Collectors
 =======================
 
-Diamond has the following [Collectors](https://github.com/BrightcoveOS/Diamond/wiki/Collectors) enabled by default:  
+Diamond has the following [Collectors](https://github.com/BrightcoveOS/Diamond/wiki/Collectors) enabled by default:
 `Cpu`, `DiskSpace`, `DiskUsage`, `LoadAvg`, `Memory`, `SockStat`, `Vmstat`.
 
 Resources and Providers
@@ -82,7 +82,7 @@ Attribute Parameters:
   <tr>
     <td>tarball_path</td>
     <td>String</td>
-    <td>Url of the Tarball to install Diamond with</td>    
+    <td>Url of the Tarball to install Diamond with</td>
     <td><tt><code>https://github.com/BrightcoveOS/Diamond/archive/master.tar.gz</code></tt></td>
   </tr>
   <tr>
@@ -127,8 +127,14 @@ Attribute Parameters:
   <tr>
     <td>diamond_handlers</td>
     <td>Array</td>
-    <td>Array of the Handlers to configure Diamond with</td>
-    <td><tt><code>["diamond.handler.graphitepickle.GraphitePickleHandler"]</code></tt></td>
+    <td>Array of the Handlers to configure Diamond with.  The default config knows about the following:</td>
+    <td><tt><code>diamond.handler.archive.ArchiveHandler</code></tt></td>
+    <td><tt><code>diamond.handler.graphite.GraphiteHandler</code></tt></td>
+    <td><tt><code>diamond.handler.graphitepickle.GraphitePickleHandler</code></tt></td>
+    <td><tt><code>diamond.handler.mysql.MySQLHandler</code></tt></td>
+    <td><tt><code>diamond.handler.stats_d.StatsdHandler</code></tt></td>
+    <td><tt><code>diamond.handler.tsdb.TSDBHandler</code></tt></td>
+    <td><tt><code>logging.handlers.TimedRotatingFileHandler</code></tt></td>
   </tr>
   <tr>
     <td>diamond_user</td>
@@ -196,6 +202,83 @@ Attribute Parameters:
   </tr>
 </table>
 
+### diamond::configure handlers
+
+<table>
+  <tr>
+    <th>Handler</th>
+    <th>Description</th>
+    <th>Attribute name</th>
+    <th>config option hash w/ types</th>
+  </tr>
+  <tr>
+    <td>diamond.handler.archive.ArchiveHandler</td>
+    <td>Write archive log files</td>
+    <td>archive_handler</td>
+    <td> <tt><code>{
+    "log_file" => "string",
+    "days"    => "string"
+    }</code></tt></td>
+  </tr>
+  <tr>
+    <td>diamond.handler.graphite.GraphiteHandler</td>
+    <td>Write to a graphite server via the line protocol</td>
+    <td>graphite_handler</td>
+    <td> <tt><code>{
+    "host" => "string",
+    "port"    => "string",
+    "timeout" => "number, the timeout on the socket"
+    }</code></tt></td>
+  </tr>
+  <tr>
+    <td>diamond.handler.graphitepickle.GraphitePickleHandler</td>
+    <td>Write to a graphite server via the pickle protocol</td>
+    <td>graphite_picklehandler</td>
+    <td> <tt><code>{
+    "host" => "string",
+    "port"    => "string",
+    "timeout" => "number, the timeout on the socket",
+    "batch" => "string, size of the batch to send"
+    }</code></tt></td>
+  </tr>
+  <tr>
+    <td>diamond.handler.mysql.MySQLHandler</td>
+    <td>Write to a mysql database</td>
+    <td>mysqlhandler</td>
+    <td> <tt><code>{
+    "hostname" => "string",
+    "port"    => "string",
+    "username"    => "string",
+    "password"    => "string",
+    "database"    => "string",
+    "table"    => "string",
+    "col_time"    => "string",
+    "col_metric"    => "string",
+    "col_value"    => "string"
+    }</code></tt></td>
+  </tr>
+  <tr>
+    <td>diamond.handler.stats_d.StatsdHandler</td>
+    <td>Write to a statsd server, sending raw values</td>
+    <td>statsdhandler</td>
+    <td> <tt><code>{
+    "host" => "string",
+    "port"    => "string"
+    }</code></tt></td>
+  </tr>
+  <tr>
+    <td>diamond.handler.tsdb.TSDBHandler</td>
+    <td>Write to an OpenTSDB server</td>
+    <td>tsdbhandler</td>
+    <td> <tt><code>{
+    "host" => "string",
+    "port"    => "string"
+    }</code></tt></td>
+  </tr>
+</table>
+
+
+
 `plugin.rb`
 -------------
 Enable / Disable plugins with this resource.
@@ -239,74 +322,74 @@ Generic Usage
 The following example will just configure Diamond with the `GraphiteHandler` and with the default collectors enabled only.
 
 ```ruby
-diamond_install "#{node['hostname']}" do  
-  action :git  
-end  
-diamond_configure "#{node['hostname']}" do   
-  action :config  
-  diamond_handlers [ "diamond.handler.graphite.GraphiteHandler" ]    
-  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})  
+diamond_install "#{node['hostname']}" do
+  action :git
 end
-```  
-    
+diamond_configure "#{node['hostname']}" do
+  action :config
+  diamond_handlers [ "diamond.handler.graphite.GraphiteHandler" ]
+  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})
+end
+```
+
 Basic Usage with Plugins
 =====
 
 The following example will configure Diamond with the `archive.ArchiveHandler` and `graphite.GraphiteHandler` with the `PingCollector` and `CPUCollector` enabled.
 
 ```ruby
-diamond_install "#{node['hostname']}" do  
-  action :git  
-end  
-diamond_configure "#{node['hostname']}" do  
-  action :config  
-  diamond_handlers [ "diamond.handler.archive.ArchiveHandler", "diamond.handler.graphite.GraphiteHandler" ]  
-  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})  
-end  
-  diamond_plugin "CPUCollector" do  
-  action :enable  
-  options({})  
-end  
-  diamond_plugin "PingCollector" do  
-  action :enable  
-  options({  
-    "enabled" => "True",  
-    "bin" => "/bin/ping",  
-    "use_sudo" => "False",  
-    "sudo_cmd" => "/usr/bin/sudo",  
-    "target_1" => "google.com",  
-    "target_2" => "aol.com"  
-    })  
-  end  
+diamond_install "#{node['hostname']}" do
+  action :git
+end
+diamond_configure "#{node['hostname']}" do
+  action :config
+  diamond_handlers [ "diamond.handler.archive.ArchiveHandler", "diamond.handler.graphite.GraphiteHandler" ]
+  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})
+end
+  diamond_plugin "CPUCollector" do
+  action :enable
+  options({})
+end
+  diamond_plugin "PingCollector" do
+  action :enable
+  options({
+    "enabled" => "True",
+    "bin" => "/bin/ping",
+    "use_sudo" => "False",
+    "sudo_cmd" => "/usr/bin/sudo",
+    "target_1" => "google.com",
+    "target_2" => "aol.com"
+    })
+  end
 ```
 
 Advanced Usage with Custom Collectors Installed
 =====
 
 ```ruby
-diamond_install "#{node['hostname']}" do  
-  action :git  
-end  
-diamond_configure "#{node['hostname']}" do  
-  action :config  
-  diamond_handlers [ "diamond.handler.archive.ArchiveHandler", "diamond.handler.graphite.GraphiteHandler" ]  
-  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})  
-end  
-directory "/usr/local/share/diamond/collectors/latency_http" do  
-  action :create  
-end  
-cookbook_file "/usr/local/share/diamond/collectors/latency_http/latency_http.py" do  
+diamond_install "#{node['hostname']}" do
+  action :git
+end
+diamond_configure "#{node['hostname']}" do
+  action :config
+  diamond_handlers [ "diamond.handler.archive.ArchiveHandler", "diamond.handler.graphite.GraphiteHandler" ]
+  graphite_handler({"host" => "127.0.0.1","port" => 2003, "timeout" => 15})
+end
+directory "/usr/local/share/diamond/collectors/latency_http" do
+  action :create
+end
+cookbook_file "/usr/local/share/diamond/collectors/latency_http/latency_http.py" do
   source "latency_http.py"
   cookbook "our_custom"
 end
-diamond_plugin "LatencyHTTTPCollector" do  
-  action :enable  
-  options({  
-    "enabled" => "True",  
-    "target_1" => "host1.com",  
-    "target_2" => "host2.com"  
-  })  
-end  
+diamond_plugin "LatencyHTTTPCollector" do
+  action :enable
+  options({
+    "enabled" => "True",
+    "target_1" => "host1.com",
+    "target_2" => "host2.com"
+  })
+end
 ```
 
 Author:: Scott M. Likens (<scott@likens.us>)
@@ -322,5 +405,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-
